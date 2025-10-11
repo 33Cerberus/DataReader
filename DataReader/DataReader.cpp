@@ -235,9 +235,11 @@ int main()
     TryOpenFile();
     TryReadDataFromFile(); 
 
+    int f = 0;
+
     while (true)
     {
-        ClearConsole();
+        if (f != 0) ClearConsole();
         PrintPersons();
         PrintInputOptions();
         char input = _getch();
@@ -263,9 +265,9 @@ int main()
             TrySaveData();
             break;
         }
+        f = 1;
     }
     inputFile.close();
     outputFile.close();
     cout << "Data saved successfully! Press any key to exit...";
-    _getch();
 }
