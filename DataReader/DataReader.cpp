@@ -24,7 +24,8 @@ public:
 };
 
 vector<Person> persons;
-ifstream file;
+ifstream inputFile;
+ofstream outputFile;
 
 void ClearConsole()
 {
@@ -47,12 +48,12 @@ void TryOpenFile()
 
     try
     {
-        file.open(fileName);
+        inputFile.open(fileName);
     }
     catch (const ios_base::failure& e)
     {
         ClearConsole();
-        cerr << "Error: cannot open file \"" << fileName << "\"\n";
+        cout << "Error: cannot open file \"" << fileName << "\"\n";
         TryOpenFile();
     }
 }
@@ -64,19 +65,28 @@ void TryReadDataFromFile()
     cout << endl;
     try
     {
-        while (getline(file, line))
+        while (getline(inputFile, line))
         {
-            std::istringstream iss(line);
-            string name, surname;
-            int age;
-            if (!(iss >> name >> surname >> age))
+            try
             {
-                cout << "Invalid data on the line " << lineNumber << endl;
-            }
-            else
-            {
+                istringstream iss(line);
+                string name, surname;
+                int age;
+
+                if (!(iss >> name >> surname >> age))
+                    throw ios_base::failure("Invalid format");
+
+                string extra;
+                if (iss >> extra)
+                    throw ios_base::failure("Too many values on line");
+
                 persons.push_back(Person(name, surname, age));
             }
+            catch (const ios_base::failure& e)
+            {
+                cout << "Invalid data on line " << lineNumber << ": " << line << endl;
+            }
+
             lineNumber++;
         }
     }
@@ -86,21 +96,176 @@ void TryReadDataFromFile()
     }
 }
 
-int main()
+void PrintPersons()
 {
-    file.exceptions(fstream::badbit | fstream::failbit);
-
-    TryOpenFile();
-    TryReadDataFromFile(); 
-
     int n = 1;
-    cout << "--------------" << endl;
-    for (Person person : persons)
+    cout << "-------------------------" << endl;
+    for (const Person& person : persons)
     {
         cout << n << " " << person.name << " " << person.surname << " " << person.age << endl;
         n++;
     }
-    cout << "--------------" << endl;
+    cout << "-------------------------" << endl;
+}
 
+void PrintInputOptions()
+{
+    cout << "Press: " << '\n' << " 1 to ADD a new person to the list" << '\n'
+        << " 2 to REMOVE a person from the list" << '\n'
+        << " 3 to CHANGE data about person " << "\n"
+        << " 4 to SAVE data into a new file" "\n";
+}
+
+void TryAddPerson()
+{
+    cin.clear();
+    PrintPersons();
+
+    string name, surname;
+    int age;
+
+    try
+    {
+        cout << "Enter person's data: ";
+        if (!(cin >> name >> surname >> age))
+            throw ios_base::failure("Invalid data");
+
+        persons.push_back(Person(name, surname, age));
+    }
+    catch (const ios_base::failure& e)
+    {
+        ClearConsole();
+        cout << "Error: invalid data" << '\n';
+        cin.clear();    
+        cin.ignore(10000, '\n');
+        TryAddPerson();
+    }
+}
+
+void TryRemovePerson()
+{
+    cin.clear();
+    PrintPersons();
+
+    int number;
+
+    try
+    {
+        if (persons.size() == 0)
+            return;
+        cout << "Enter person's number: ";
+        if (!(cin >> number) || number <= 0 || number > persons.size())
+            throw std::ios_base::failure("Invalid data");
+
+        persons.erase(persons.begin() + number - 1);
+    }
+    catch (const ios_base::failure& e)
+    {
+        ClearConsole();
+        cout << "Error: invalid number" << '\n';
+        cin.clear();
+        cin.ignore(10000, '\n');
+        TryRemovePerson();
+    }
+}
+
+void TryChangePerson()
+{
+    cin.clear();
+    PrintPersons();
+
+    int number;
+
+    string name, surname;
+    int age;
+
+    try
+    {
+        if (persons.size() == 0)
+            return;
+        cout << "Enter person's number: ";
+        if (!(cin >> number) || number <= 0 || number > persons.size())
+            throw std::ios_base::failure("Invalid number");
+
+        cout << "Enter new person's data: ";
+
+        if (!(cin >> name >> surname >> age))
+            throw ios_base::failure("Invalid data");
+
+        persons[number - 1] = (Person(name, surname, age));
+    }
+    catch (const ios_base::failure& e)
+    {
+        ClearConsole();
+        cout << "Error: invalid data" << '\n';
+        cin.clear();
+        cin.ignore(10000, '\n');
+        TryChangePerson();
+    }
+}
+
+void TrySaveData()
+{
+    cout << "Enter file name: ";
+    string fileName;
+    cin >> fileName;
+
+    try
+    {
+        outputFile.open(fileName);
+        for (const Person& person : persons)
+        {
+            outputFile << person.name << " " << person.surname << " " << person.age << endl;
+        }
+
+    }
+    catch (const ios_base::failure& e)
+    {
+        ClearConsole();
+        cout << "Error: cannot create file \"" << fileName << "\"\n";
+        TryOpenFile();
+    }
+}
+
+int main()
+{
+    inputFile.exceptions(fstream::badbit | fstream::failbit);
+    outputFile.exceptions(fstream::badbit | fstream::failbit);
+
+    TryOpenFile();
+    TryReadDataFromFile(); 
+
+    while (true)
+    {
+        ClearConsole();
+        PrintPersons();
+        PrintInputOptions();
+        char input = _getch();
+
+        if (input == '1')
+        {
+            ClearConsole();
+            TryAddPerson();
+        }
+        else if (input == '2')
+        {
+            ClearConsole();
+            TryRemovePerson();
+        }
+        else if (input == '3')
+        {
+            ClearConsole();
+            TryChangePerson();
+        }
+        else if (input == '4')
+        {
+            ClearConsole();
+            TrySaveData();
+            break;
+        }
+    }
+    inputFile.close();
+    outputFile.close();
+    cout << "Data saved successfully! Press any key to exit...";
     _getch();
 }
