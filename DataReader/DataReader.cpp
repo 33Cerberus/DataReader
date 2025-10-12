@@ -157,21 +157,30 @@ void TryAddPerson()
 
 void TryRemovePerson()
 {
-    cin.clear();
-
-    int number;
-
-    if (persons.size() == 0)
+    if (persons.empty())
         return;
 
     while (true)
     {
+        int number;
+
         PrintPersons();
+        cout << "Enter person's number: ";
+
+        string line;
+        getline(cin >> ws, line);
+
+        istringstream iss(line);
+
+
         try
         {
-            cout << "Enter person's number: ";
-            if (!(cin >> number) || number <= 0 || number > persons.size())
-                throw std::ios_base::failure("Invalid data");
+            if (!(iss >> number) || number <= 0 || number > persons.size())
+                throw ios_base::failure("Invalid data");
+
+            string extra;
+            if (iss >> extra)
+                throw ios_base::failure("Too many values");
 
             persons.erase(persons.begin() + number - 1);
             break;
@@ -181,7 +190,6 @@ void TryRemovePerson()
             ClearConsole();
             cout << "Error: invalid number" << '\n';
             cin.clear();
-            cin.ignore(10000, '\n');
         }
     }
 }
@@ -193,44 +201,59 @@ void TryChangePerson()
 
     while (true)
     {
+        int number;
+
         PrintPersons();
         cout << "Enter person's number to change: ";
-        int number;
-        if (!(cin >> number) || number <= 0 || number > persons.size())
-        {
-            ClearConsole();
-            cout << "Error: invalid number\n";
-            cin.clear();
-            cin.ignore(10000, '\n');
-            continue;
-        }
 
-        cin.ignore(10000, '\n');
-        cout << "Enter new person's data: ";
         string line;
-        getline(cin, line);
+        getline(cin >> ws, line);
+
         istringstream iss(line);
-        string name, surname;
-        int age;
 
         try
         {
-            if (!(iss >> name >> surname >> age))
+            if (!(iss >> number) || number <= 0 || number > persons.size())
                 throw ios_base::failure("Invalid data");
 
             string extra;
             if (iss >> extra)
                 throw ios_base::failure("Too many values");
 
-            persons[number - 1] = Person(name, surname, age);
-            break;
+            cin.clear();
+
+            cout << "Enter new person's data: ";
+            string line;
+            getline(cin, line);
+            istringstream iss(line);
+            string name, surname;
+            int age;
+
+            try
+            {
+                if (!(iss >> name >> surname >> age))
+                    throw ios_base::failure("Invalid data");
+
+                string extra;
+                if (iss >> extra)
+                    throw ios_base::failure("Too many values");
+
+                persons[number - 1] = Person(name, surname, age);
+                break;
+            }
+            catch (const ios_base::failure& e)
+            {
+                ClearConsole();
+                cout << "Error: invalid data" << '\n';
+                cin.clear();
+            }
         }
         catch (const ios_base::failure& e)
         {
             ClearConsole();
-            cout << "Error: invalid data" << '\n';
+            cout << "Error: invalid number" << '\n';
             cin.clear();
-        }
+        }          
     }
 }
 
@@ -303,4 +326,5 @@ int main()
     inputFile.close();
     outputFile.close();
     cout << "Data saved successfully! Press any key to exit...";
+    _getch();
 }
