@@ -264,7 +264,11 @@ void TrySaveData()
     while (true)
     {
         cout << "Enter file name: ";
-        cin >> fileName;
+
+        string line;
+        getline(cin >> ws, line);
+
+        fileName = line;
 
         try
         {
