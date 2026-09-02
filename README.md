@@ -37,7 +37,3 @@ Lines with missing, extra, or invalid values are skipped with an error message p
 2. Build and run the `DataReader` project
 3. Enter the path to an input file (e.g. `Input.txt`) when prompted
 4. Use the on-screen menu to add / remove / edit entries, then save
-
----
-
-*This README was generated with the help of Claude.*
